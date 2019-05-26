@@ -36,9 +36,9 @@ public class UserController {
 	public JsonResponse get(@PathVariable int id) {
 		JsonResponse jr = null;
 		try {
-			Optional<User> p = userRepo.findById(id);
-			if(p.isPresent()) {
-				jr = JsonResponse.getInstance(p);
+			Optional<User> u = userRepo.findById(id);
+			if(u.isPresent()) {
+				jr = JsonResponse.getInstance(u);
 			} else {
 				jr = JsonResponse.getInstance("No User found for id: " + id);
 			}
@@ -49,12 +49,17 @@ public class UserController {
 		return jr;
 	}
 	
-	@PostMapping("/")
-	public JsonResponse add(@RequestBody User p) {
+	
+	@PutMapping("/")
+	public JsonResponse update(@RequestBody User u) {
 		JsonResponse jr = null;
 		//NOTE: may need to enhance exception handling in future for more exceptions
 		try {
-			jr = JsonResponse.getInstance(userRepo.save(p));
+			if(userRepo.existsById(u.getId())) {
+				jr = JsonResponse.getInstance(userRepo.save(u));
+		} else {
+			jr = JsonResponse.getInstance("User id: " + u.getId() + "does not exist");
+		}
 		}
 		catch (Exception e) {
 			jr = JsonResponse.getInstance(e);
@@ -62,16 +67,12 @@ public class UserController {
 		return jr;
 	}
 	
-	@PutMapping("/")
-	public JsonResponse update(@RequestBody User p) {
+	@PostMapping("/")
+	public JsonResponse add(@RequestBody User u) {
 		JsonResponse jr = null;
 		//NOTE: may need to enhance exception handling in future for more exceptions
 		try {
-			if(userRepo.existsById(p.getId())) {
-				jr = JsonResponse.getInstance(userRepo.save(p));
-		} else {
-			jr = JsonResponse.getInstance("User id: " + p.getId() + "does not exist");
-		}
+			jr = JsonResponse.getInstance(userRepo.save(u));
 		}
 		catch (Exception e) {
 			jr = JsonResponse.getInstance(e);
@@ -80,15 +81,15 @@ public class UserController {
 	}
 	
 	@DeleteMapping("/")
-	public JsonResponse delete(@RequestBody User p) {
+	public JsonResponse delete(@RequestBody User u) {
 		JsonResponse jr = null;
 		//NOTE: may need to enhance exception handling in future for more exceptions
 		try {
-			if(userRepo.existsById(p.getId())) {
-				userRepo.delete(p);
+			if(userRepo.existsById(u.getId())) {
+				userRepo.delete(u);
 				jr = JsonResponse.getInstance("User Deleted.");
 		} else {
-			jr = JsonResponse.getInstance("User id: " + p.getId() + "does not exist and you are attempting to delete it");
+			jr = JsonResponse.getInstance("User id: " + u.getId() + "does not exist and you are attempting to delete it");
 		}
 		}
 		catch (Exception e) {
@@ -98,7 +99,7 @@ public class UserController {
 	}
 	
 	//A CUSTOM METHOD
-	@PostMapping("")
+	@PostMapping("/authenticate")
 	public JsonResponse login(@RequestParam String userName, String password) {
 		JsonResponse jr = null;
 		try {
@@ -106,7 +107,7 @@ public class UserController {
 			if(u.isPresent()) {
 				jr = JsonResponse.getInstance(u);
 			} else {
-				jr = JsonResponse.getInstance("No User found for userName: " + userName);
+				jr = JsonResponse.getInstance("No user found for userName/password comination" + userName);
 			}
 		}
 		catch (Exception e) {

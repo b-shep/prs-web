@@ -21,41 +21,47 @@ public class PurchaseRequest {
 	private User user;
 	private String description;
 	private String justification;
-	private LocalDate dateneeded;
+	private LocalDate dateNeeded;
 	private String deliveryMode;
-	private String status = "new";
+	private String status;
 	private double total;
-	private LocalDateTime submittedDate;
+	private LocalDateTime submittedDate = LocalDateTime.now();
 	private String reasonForRejection;
-	
 	public PurchaseRequest() {
 		super();
 	}
 
-	public PurchaseRequest(int id, User user, String description, String justification, LocalDate dateneeded, String deliveryMode,
-			String status, double total, LocalDateTime submittedDate, String reasonForRejection) {
+	public PurchaseRequest(int id, User user, String description, String justification, LocalDate dateNeeded, String deliveryMode,
+			String status, String reasonForRejection) {
 		super();
 		this.id = id;
 		this.user = user;
 		this.description = description;
-		this.dateneeded = dateneeded;
+		this.dateNeeded = dateNeeded;
 		this.deliveryMode = deliveryMode;
 		this.status = status;
-		this.total = total;
-		this.submittedDate = submittedDate;
 		this.reasonForRejection = reasonForRejection;
 	}
 
-	public PurchaseRequest(User user, String description, String justification, LocalDate dateneeded, String deliveryMode, LocalDateTime submittedDate) {
+	public PurchaseRequest(User user, String description, String justification, LocalDate dateNeeded, String deliveryMode, LocalDateTime submittedDate) {
 		super();
 		this.user = user;
 		this.description = description;
 		this.justification = justification;
-		this.dateneeded = dateneeded;
+		this.dateNeeded = dateNeeded;
 		this.deliveryMode = deliveryMode;
-		this.total = total;
-		this.submittedDate = submittedDate;
 	}
+	
+	public PurchaseRequest(User user, String description, String justification, LocalDate dateNeeded, String deliveryMode) {
+		super();
+		this.user = user;
+		this.description = description;
+		this.justification = justification;
+		this.dateNeeded = dateNeeded;
+		this.deliveryMode = deliveryMode;
+	}
+	
+	
 	
 	public int getId() {
 		return id;
@@ -81,12 +87,20 @@ public class PurchaseRequest {
 		this.description = description;
 	}
 
-	public LocalDate getDate() {
-		return dateneeded;
+	public String getJustification() {
+		return justification;
 	}
 
-	public void setDate(LocalDate dateneeded) {
-		this.dateneeded = dateneeded;
+	public void setJustification(String justification) {
+		this.justification = justification;
+	}
+
+	public LocalDate getDateNeeded() {
+		return dateNeeded;
+	}
+
+	public void setDateNeeded(LocalDate dateNeeded) {
+		this.dateNeeded = dateNeeded;
 	}
 
 	public String getDeliveryMode() {
@@ -128,13 +142,15 @@ public class PurchaseRequest {
 	public void setReasonForRejection(String reasonForRejection) {
 		this.reasonForRejection = reasonForRejection;
 	}
+	
 
 	@Override
 	public String toString() {
-		return "\nPurchaseRequest: id=" + id + ", user=" + user.getUserName() + ", description=" + description + ", dateneeded=" + dateneeded
+		return "\nPurchaseRequest: id=" + id + ", user=" + user.getUserName() + ", description=" + description + ", dateNeeded=" + dateNeeded
 				+ ", deliveryMode=" + deliveryMode + ", status=" + status + ", total=" + total + ", submittedDate="
 				+ submittedDate + ", reasonForRejection=" + reasonForRejection;
 	}
+	
 	
 	
 }

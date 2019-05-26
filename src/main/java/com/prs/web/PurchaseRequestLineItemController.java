@@ -13,16 +13,22 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.prs.business.JsonResponse;
+import com.prs.business.Product;
+import com.prs.business.PurchaseRequest;
 import com.prs.business.PurchaseRequestLineItem;
 import com.prs.db.PurchaseRequestLineItemRepository;
+import com.prs.db.PurchaseRequestRepository;
 
 
 @RestController
-@RequestMapping("/purchase-request-line-items")
+@RequestMapping("/prlis")
 public class PurchaseRequestLineItemController {
 	
 	@Autowired
 	private PurchaseRequestLineItemRepository prliRepo;
+	
+	@Autowired
+	private PurchaseRequestRepository prRepo;
 	
 	@GetMapping("/")
 	public JsonResponse getAll(){
@@ -62,6 +68,8 @@ public class PurchaseRequestLineItemController {
 		//NOTE: may need to enhance exception handling in future for more exceptions
 		try {
 			jr = JsonResponse.getInstance(prliRepo.save(prli));
+			System.out.println("prli should be saved");
+			updateTotal(prli);
 		}
 		catch (Exception e) {
 			jr = JsonResponse.getInstance(e);
@@ -76,6 +84,7 @@ public class PurchaseRequestLineItemController {
 		try {
 			if(prliRepo.existsById(prli.getId())) {
 				jr = JsonResponse.getInstance(prliRepo.save(prli));
+				updateTotal(prli);
 		} else {
 			jr = JsonResponse.getInstance("PurchaseRequestLineItem id: " + prli.getId() + "does not exist");
 		}
@@ -94,15 +103,27 @@ public class PurchaseRequestLineItemController {
 			if(prliRepo.existsById(prli.getId())) {
 				prliRepo.delete(prli);
 				jr = JsonResponse.getInstance("PurchaseRequestLineItem Deleted.");
-		} else {
-			jr = JsonResponse.getInstance("PurchaseRequestLineItem id: " + prli.getId() + "does not exist and you are attempting to delete it");
-		}
-		}
-		catch (Exception e) {
+				updateTotal(prli);
+			} else {
+				jr = JsonResponse.getInstance("PurchaseRequestLineItem id: " + prli.getId() + "does not exist and you are attempting to delete it");
+			}
+		} catch (Exception e) {
 			jr = JsonResponse.getInstance(e);
 		}
 		return jr;
 	}
 	
-
+	public void updateTotal(PurchaseRequestLineItem prli) {
+		double total = 0;
+		Iterable<PurchaseRequestLineItem> prlis = prliRepo.findAll();
+		for (PurchaseRequestLineItem lineItem: prlis) {
+			if(lineItem.getPurchaseRequest().getId() == prli.getPurchaseRequest().getId()) {
+				total += lineItem.getProduct().getPrice() * lineItem.getQuantity();
+			}
+		}
+		PurchaseRequest pr = prli.getPurchaseRequest();
+		pr.setTotal(total);
+		prRepo.save(pr);
+	}
+	
 }

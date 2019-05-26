@@ -20,9 +20,10 @@ public class VendorTests {
 	
 	@Before
 	public void testVendorAddAndDelete() {
-		Vendor u = new Vendor();
-		//save a user
-		assertNotNull(vendorRepo.save(u));
+		Vendor v = new Vendor(0, "junkRus", "junk", "123 test", "test place", "OH", "39404", "23923414", "ersd@re.com", false);
+		System.out.println(v);
+		//save a vendor
+		assertNotNull(vendorRepo.save(v));
 	}
 	
 }

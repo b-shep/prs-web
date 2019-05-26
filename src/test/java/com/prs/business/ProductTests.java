@@ -2,6 +2,8 @@ package com.prs.business;
 
 import static org.junit.Assert.*;
 
+import java.util.Optional;
+
 import javax.transaction.Transactional;
 
 import org.junit.Before;
@@ -12,28 +14,35 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import com.prs.business.User;
+import com.prs.db.ProductRepository;
 import com.prs.db.UserRepository;
+import com.prs.db.VendorRepository;
+import com.prs.web.VendorController;
 
 @Transactional
 @SpringBootTest
 @RunWith(SpringRunner.class)
-public class UserTests {
+public class ProductTests {
 	
 	@Autowired
-	private UserRepository userRepo;
+	private ProductRepository productRepo;
+	
+	@Autowired
+	private VendorRepository vendorRepo;
 	
 	@Test
 	public void testUserGetAll() {
-		Iterable<User> users = userRepo.findAll();
-		assertNotNull(users);
+		Iterable<Product> products = productRepo.findAll();
+		assertNotNull(products);
 	}
 	
 	@Before
 	public void testUserAddAndDelete() {
-		User u = new User(0, "userName", "password", "firstName", "lastName", "phoneNumber", "email", true, true);
-		System.out.println(u);
+		Vendor v = vendorRepo.findById(1).get();
+		Product p = new Product(0, v, "part1", "test product", 12.34, "unittest", "photopath");
 		//save a user
-		assertNotNull(userRepo.save(u));
+		assertNotNull(productRepo.save(p));
+		
 	}
 	
 }

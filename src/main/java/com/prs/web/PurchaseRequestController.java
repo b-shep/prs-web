@@ -1,5 +1,8 @@
 package com.prs.web;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +17,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.prs.business.JsonResponse;
 import com.prs.business.PurchaseRequest;
+import com.prs.business.User;
 import com.prs.db.PurchaseRequestRepository;
+import com.prs.db.UserRepository;
 
 
 @RestController
@@ -24,11 +29,16 @@ public class PurchaseRequestController {
 	@Autowired
 	private PurchaseRequestRepository purchaseRequestRepo;
 	
+	@Autowired
+	private UserRepository userRepo;
+	
+	
 	@GetMapping("/")
 	public JsonResponse getAll(){
 		JsonResponse jr = null;
 		try {
 			jr = JsonResponse.getInstance(purchaseRequestRepo.findAll());
+
 	
 		}
 		catch (Exception e) {
@@ -56,11 +66,13 @@ public class PurchaseRequestController {
 		return jr;
 	}
 	
-	@PostMapping("/")
+	@PostMapping("/submit-new")
 	public JsonResponse add(@RequestBody PurchaseRequest pr) {
 		JsonResponse jr = null;
 		//NOTE: may need to enhance exception handling in future for more exceptions
 		try {
+			setStatus(pr, StatusType.NEW);
+			pr.setSubmittedDate(LocalDateTime.now());
 			jr = JsonResponse.getInstance(purchaseRequestRepo.save(pr));
 		}
 		catch (Exception e) {
@@ -102,5 +114,101 @@ public class PurchaseRequestController {
 			jr = JsonResponse.getInstance(e);
 		}
 		return jr;
+	}
+	
+	@PutMapping("/submit-review")
+	public JsonResponse submitForReview(@RequestBody PurchaseRequest pr) {
+		JsonResponse jr = null;
+		try {
+			if(purchaseRequestRepo.existsById(pr.getId())) {
+				if(pr.getTotal() < 50) {
+					setStatus(pr, StatusType.APPOVED);
+					jr = JsonResponse.getInstance(purchaseRequestRepo.save(pr));
+				} else {
+					setStatus(pr, StatusType.REVIEW);
+					jr = JsonResponse.getInstance(purchaseRequestRepo.save(pr));
+				}
+			} else {
+				jr = JsonResponse.getInstance("PurchaseRequest with id: " + pr.getId() + " does not exist that you are attempting to submit for review");
+			}
+		} catch (Exception e){
+			jr = JsonResponse.getInstance(e);
+		}
+		return jr;
+	}
+	
+	@PutMapping("/approve")
+	public JsonResponse approve(@RequestBody PurchaseRequest pr) {
+		JsonResponse jr = null;
+		try {
+			if(purchaseRequestRepo.existsById(pr.getId())) {
+				setStatus(pr, StatusType.APPOVED);
+				jr = JsonResponse.getInstance(purchaseRequestRepo.save(pr));
+			} else {
+				jr = JsonResponse.getInstance("PurchaseRequest with id: " + pr.getId() + " does not exist and you are attempting to set its Status");
+			}
+		} catch(Exception e) {
+			jr = JsonResponse.getInstance(e);
+		}
+		return jr;
+	}
+	
+	@PutMapping("/reject")
+	public JsonResponse reject(@RequestBody PurchaseRequest pr) {
+		JsonResponse jr = null;
+		try {
+			if(purchaseRequestRepo.existsById(pr.getId())) {
+				setStatus(pr, StatusType.REJECTED);
+				jr = JsonResponse.getInstance(purchaseRequestRepo.save(pr));
+			} else {
+				jr = JsonResponse.getInstance("PurchaseRequest with id: " + pr.getId() + " does not exist and you are attempting to set its Status");
+			}
+		} catch(Exception e) {
+			jr = JsonResponse.getInstance(e);
+		}
+		return jr;
+	}
+	
+	@GetMapping("/listReview")
+	public JsonResponse listReview(@RequestBody User u) {
+		JsonResponse jr = null;
+		try {
+			if(userRepo.existsById(u.getId())) {
+				Iterable<PurchaseRequest> prs = purchaseRequestRepo.findAll();
+				List<PurchaseRequest> nonUserPrs = new ArrayList<>();
+				for (PurchaseRequest pr: prs){
+					if (pr.getUser().getId() != u.getId()) {
+						nonUserPrs.add(pr);
+					}
+				}
+				Iterable<PurchaseRequest> returnList = nonUserPrs;
+				jr = JsonResponse.getInstance(returnList);
+			} else {
+				jr = JsonResponse.getInstance("User with id: " + u.getId());
+			}
+		} catch (Exception e) {
+			jr = JsonResponse.getInstance(e);
+		}
+		
+		return jr;
+	}
+	
+	public enum StatusType {
+		NEW,
+		REVIEW,
+		APPOVED,
+		REJECTED
+	}
+
+	public void setStatus(PurchaseRequest pr, StatusType st) {
+		if(st == StatusType.NEW) {
+			pr.setStatus("NEW");
+		} else if(st == StatusType.REVIEW) {
+			pr.setStatus("REVIEW");
+		} else if(st == StatusType.APPOVED) {
+			pr.setStatus("APPROVED");
+		} else if(st == StatusType.REJECTED) {
+			pr.setStatus("REJECTED");
+		}
 	}
 }
