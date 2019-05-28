@@ -21,7 +21,7 @@ import com.prs.db.PurchaseRequestRepository;
 
 
 @RestController
-@RequestMapping("/prlis")
+@RequestMapping("/purchase-request-line-items")
 public class PurchaseRequestLineItemController {
 	
 	@Autowired
@@ -30,7 +30,7 @@ public class PurchaseRequestLineItemController {
 	@Autowired
 	private PurchaseRequestRepository prRepo;
 	
-	@GetMapping("/")
+	@GetMapping("")
 	public JsonResponse getAll(){
 		JsonResponse jr = null;
 		try {
@@ -62,13 +62,13 @@ public class PurchaseRequestLineItemController {
 		return jr;
 	}
 	
-	@PostMapping("/")
+	@PostMapping("")
 	public JsonResponse add(@RequestBody PurchaseRequestLineItem prli) {
 		JsonResponse jr = null;
 		//NOTE: may need to enhance exception handling in future for more exceptions
 		try {
+			prli.getPurchaseRequest(); //debug statement to prevent prli from saving without updating pr total
 			jr = JsonResponse.getInstance(prliRepo.save(prli));
-			System.out.println("prli should be saved");
 			updateTotal(prli);
 		}
 		catch (Exception e) {
@@ -77,7 +77,7 @@ public class PurchaseRequestLineItemController {
 		return jr;
 	}
 	
-	@PutMapping("/")
+	@PutMapping("")
 	public JsonResponse update(@RequestBody PurchaseRequestLineItem prli) {
 		JsonResponse jr = null;
 		//NOTE: may need to enhance exception handling in future for more exceptions
@@ -95,7 +95,7 @@ public class PurchaseRequestLineItemController {
 		return jr;
 	}
 	
-	@DeleteMapping("/")
+	@DeleteMapping("")
 	public JsonResponse delete(@RequestBody PurchaseRequestLineItem prli) {
 		JsonResponse jr = null;
 		//NOTE: may need to enhance exception handling in future for more exceptions
@@ -115,13 +115,15 @@ public class PurchaseRequestLineItemController {
 	
 	public void updateTotal(PurchaseRequestLineItem prli) {
 		double total = 0;
+		PurchaseRequest pr = prli.getPurchaseRequest();
 		Iterable<PurchaseRequestLineItem> prlis = prliRepo.findAll();
+		
 		for (PurchaseRequestLineItem lineItem: prlis) {
-			if(lineItem.getPurchaseRequest().getId() == prli.getPurchaseRequest().getId()) {
+			if(lineItem.getPurchaseRequest().getId() == pr.getId()) {
 				total += lineItem.getProduct().getPrice() * lineItem.getQuantity();
 			}
 		}
-		PurchaseRequest pr = prli.getPurchaseRequest();
+		
 		pr.setTotal(total);
 		prRepo.save(pr);
 	}

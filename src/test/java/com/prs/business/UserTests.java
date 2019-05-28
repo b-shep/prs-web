@@ -36,4 +36,5 @@ public class UserTests {
 		assertNotNull(userRepo.save(u));
 	}
 	
+	
 }

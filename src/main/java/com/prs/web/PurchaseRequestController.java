@@ -2,6 +2,7 @@ package com.prs.web;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,7 +18,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.prs.business.JsonResponse;
 import com.prs.business.PurchaseRequest;
+import com.prs.business.PurchaseRequestLineItem;
 import com.prs.business.User;
+import com.prs.db.PurchaseRequestLineItemRepository;
 import com.prs.db.PurchaseRequestRepository;
 import com.prs.db.UserRepository;
 
@@ -31,6 +34,9 @@ public class PurchaseRequestController {
 	
 	@Autowired
 	private UserRepository userRepo;
+	
+	@Autowired
+	private PurchaseRequestLineItemRepository prliRepo;
 	
 	
 	@GetMapping("/")
@@ -81,7 +87,7 @@ public class PurchaseRequestController {
 		return jr;
 	}
 	
-	@PutMapping("/")
+	@PutMapping("")
 	public JsonResponse update(@RequestBody PurchaseRequest pr) {
 		JsonResponse jr = null;
 		//NOTE: may need to enhance exception handling in future for more exceptions
@@ -98,7 +104,7 @@ public class PurchaseRequestController {
 		return jr;
 	}
 	
-	@DeleteMapping("/")
+	@DeleteMapping("")
 	public JsonResponse delete(@RequestBody PurchaseRequest pr) {
 		JsonResponse jr = null;
 		//NOTE: may need to enhance exception handling in future for more exceptions
@@ -121,13 +127,13 @@ public class PurchaseRequestController {
 		JsonResponse jr = null;
 		try {
 			if(purchaseRequestRepo.existsById(pr.getId())) {
-				if(pr.getTotal() < 50) {
+				if(pr.getTotal() <= 50) {
 					setStatus(pr, StatusType.APPOVED);
-					jr = JsonResponse.getInstance(purchaseRequestRepo.save(pr));
 				} else {
 					setStatus(pr, StatusType.REVIEW);
-					jr = JsonResponse.getInstance(purchaseRequestRepo.save(pr));
 				}
+				pr.setSubmittedDate(LocalDateTime.now());
+				jr = JsonResponse.getInstance(purchaseRequestRepo.save(pr));
 			} else {
 				jr = JsonResponse.getInstance("PurchaseRequest with id: " + pr.getId() + " does not exist that you are attempting to submit for review");
 			}
@@ -169,11 +175,11 @@ public class PurchaseRequestController {
 		return jr;
 	}
 	
-	@GetMapping("/listReview")
+	@GetMapping("/list-review")
 	public JsonResponse listReview(@RequestBody User u) {
 		JsonResponse jr = null;
-		try {
-			if(userRepo.existsById(u.getId())) {
+		try {										//is isReviewer check necessary?
+			if(userRepo.existsById(u.getId()) && u.isReviewer() == true) {
 				Iterable<PurchaseRequest> prs = purchaseRequestRepo.findAll();
 				List<PurchaseRequest> nonUserPrs = new ArrayList<>();
 				for (PurchaseRequest pr: prs){
@@ -181,16 +187,44 @@ public class PurchaseRequestController {
 						nonUserPrs.add(pr);
 					}
 				}
-				Iterable<PurchaseRequest> returnList = nonUserPrs;
-				jr = JsonResponse.getInstance(returnList);
+//				list of prlis never interacts with database so don't need to return as iterable?
+//				Iterable<PurchaseRequest> returnList = nonUserPrs;
+				jr = JsonResponse.getInstance(nonUserPrs);
 			} else {
-				jr = JsonResponse.getInstance("User with id: " + u.getId());
+				jr = JsonResponse.getInstance("User with Id: " + u.getId() + " either does not have necessary permissions or does not exist");
 			}
 		} catch (Exception e) {
 			jr = JsonResponse.getInstance(e);
 		}
 		
 		return jr;
+	}
+	
+	@GetMapping("/lines-for-pr/{id}")
+	public JsonResponse listPrlis(PurchaseRequest pr) {
+		JsonResponse js = null;
+		try {
+			if (purchaseRequestRepo.existsById(pr.getId())) {
+				Iterable<PurchaseRequestLineItem> prlis = prliRepo.findAll();
+				List<PurchaseRequestLineItem> prlisPr = new ArrayList<>();
+				for(PurchaseRequestLineItem lineItem: prlis) {
+					if (lineItem.getPurchaseRequest().getId() == pr.getId()) {
+						prlisPr.add(lineItem);
+					}
+				}
+//				Iterable<PurchaseRequestLineItem> returnList = prlisPr;
+//				list of prlis never interacts with database so don't need to return as iterable?
+				js = JsonResponse.getInstance(prlisPr);
+			} else {
+				js = JsonResponse.getInstance("Error, you are trying to retrieve line items for purchase request that does not exist");
+			}
+		} catch (Exception e) {
+			js = JsonResponse.getInstance(e);
+	}
+		
+		
+		
+		return js;
 	}
 	
 	public enum StatusType {
