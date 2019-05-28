@@ -31,12 +31,8 @@ public class VendorTests {
 	
 	@Before
 	public void testVendorAddAndDelete() {
-		Vendor v = new Vendor(0, "testCode", "testName", "testAddress", "testCity", "testState", "testZIP", "testPhoneNumber", "testEmail", true);
-		System.out.println(v);
-		//save a user
+		Vendor v = new Vendor(0, "testCode", "testName", "testAddress", "testCity", "00", "00", "test", "test", true);
 		assertNotNull(vendorRepo.save(v));
-		Iterable<Vendor> vendors = vendorRepo.findAll();
-		System.out.println(vendors);
 	}
 
 
