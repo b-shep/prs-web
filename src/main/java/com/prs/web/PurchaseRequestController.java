@@ -183,7 +183,7 @@ public class PurchaseRequestController {
 				Iterable<PurchaseRequest> prs = purchaseRequestRepo.findAll();
 				List<PurchaseRequest> nonUserPrs = new ArrayList<>();
 				for (PurchaseRequest pr: prs){
-					if (pr.getUser().getId() != u.getId()) {
+					if (pr.getUser().getId() != u.getId() && pr.getStatus().equals("REVIEW")) {
 						nonUserPrs.add(pr);
 					}
 				}
