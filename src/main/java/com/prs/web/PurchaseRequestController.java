@@ -175,24 +175,25 @@ public class PurchaseRequestController {
 		return jr;
 	}
 	
-	@GetMapping("/list-review")
-	public JsonResponse listReview(@RequestBody User u) {
+	@GetMapping("/list-review/{id}")
+	public JsonResponse listReview(@PathVariable int id) {
 		JsonResponse jr = null;
-		try {										//is isReviewer check necessary?
-			if(userRepo.existsById(u.getId()) && u.isReviewer() == true) {
+		try {
+			if (userRepo.existsById(id) && userRepo.findById(id).get().isReviewer() == true){
 				Iterable<PurchaseRequest> prs = purchaseRequestRepo.findAll();
 				List<PurchaseRequest> nonUserPrs = new ArrayList<>();
 				for (PurchaseRequest pr: prs){
-					if (pr.getUser().getId() != u.getId() && pr.getStatus().equals("REVIEW")) {
+					if (pr.getUser().getId() != id && pr.getStatus().equals("REVIEW")) {
 						nonUserPrs.add(pr);
 					}
 				}
-//				list of prlis never interacts with database so don't need to return as iterable?
+//				list of prlis never interacts with database, does it need to return an iterable?
 //				Iterable<PurchaseRequest> returnList = nonUserPrs;
 				jr = JsonResponse.getInstance(nonUserPrs);
 			} else {
-				jr = JsonResponse.getInstance("User with Id: " + u.getId() + " either does not have necessary permissions or does not exist");
+				jr = JsonResponse.getInstance("User with Id: " + id + " either does not have necessary permissions or does not exist");
 			}
+			
 		} catch (Exception e) {
 			jr = JsonResponse.getInstance(e);
 		}
